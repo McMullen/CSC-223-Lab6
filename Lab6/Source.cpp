@@ -62,7 +62,6 @@ void readOperation(const char readLine[MAX_LENGTH], int& index, ifstream& input,
 			arithmetic(readLine, next, index, input, output);
 			index = 1;
 		}
-		input.get(next);
 	}
 }
 
