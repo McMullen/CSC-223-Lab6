@@ -2,7 +2,14 @@
 //Author:	   Jason McMullen and Arthur Lunn
 //Due Date:	   4/1/14
 //Program:	   Lab6
-//Description: T
+//Description: This program will read in input from a txt file, analyze the data, and perform 
+//			   mathematical opereations on the set of numbers following the character identifing
+//			   the operation to be used. The input file needs to be organized in such a way that 
+//			   the first character of each line will be the operator needed to be preformed on the
+//			   follwing numbers, if no numbers are found on the same line then it is assumed that
+//			   the leading character will changed the notation in which decimals are displayed. 
+//			   The program does all of this by saving each line of the input file in a cstring
+//			   array. All output for this program will be displayed on the terminal.
 //-------------------------------------------------------------------------------------------------
 #include <fstream>
 #include <iostream>
@@ -52,7 +59,7 @@ void arithmetic(const char readLine[MAX_LENGTH], char operation, int& index);
 //				 current index of the cstring array.
 //Postcondition: This function will not return anything.
 //-------------------------------------------------------------------------------------------------
-void readNumber(const char readLine[MAX_LENGTH], double numArray[2], int& index);
+void stringToDouble(const char readLine[MAX_LENGTH], double numArray[2], int& index);
 
 //-------------------------------------------------------------------------------------------------
 //trigFunction:  This function will view the char holding the value that stands for the operation
@@ -136,18 +143,17 @@ void readOperation(const char readLine[MAX_LENGTH], ifstream& input){
 	char next = readLine[index];
 
 	while (doContinue != 1){
-		std::cout << index;
-		if (isalpha(next)){			//if char of alpha type (some type of letter)
+		if (isalpha(next)){			               //if char of alpha type (some type of letter)
 			if (next == 'S' || next == 'T' || next == 'C'){		//for trig types
 				trigFunction(readLine, next, index);
 				doContinue = 1;
 			}
 			else{
-				modeToPrint(readLine, next);		//all remaining alpha types
+				modeToPrint(readLine, next);	  //all remaining alpha types
 				doContinue = 1;
 			}
 		}
-		else if (isprint(next) || (next == '•')){	//if char of print type (punctuation)
+		else if (isprint(next) || (next == '•')){ //if char of print type (punctuation)
 			arithmetic(readLine, next, index);
 			doContinue = 1;
 		}
@@ -157,7 +163,7 @@ void readOperation(const char readLine[MAX_LENGTH], ifstream& input){
 }
 
 //-------------------------------------------------------------------------------------------------
-//readNumber:	 This function will find all of the numbers remaining in the cstring array, store
+//stringToDouble:This function will find all of the numbers remaining in the cstring array, store
 //				 them in a new cstring array and then convert those cstrings into doubles. It will
 //				 then store those doubles into an array of doubles that the calling function has
 //				 access to. This function uses the cleanToNext function to take care of the white
@@ -167,7 +173,7 @@ void readOperation(const char readLine[MAX_LENGTH], ifstream& input){
 //				 current index of the cstring array.
 //Postcondition: This function will not return anything.
 //-------------------------------------------------------------------------------------------------
-void readNumber(const char readLine[MAX_LENGTH], double numArray[2], int& index){
+void stringToDouble(const char readLine[MAX_LENGTH], double numArray[2], int& index){
 	double answer = 0;		//stores the solution of the cast that will be stored in the new array
 	int j = 0, i = 0;
 	string digits = "";
@@ -176,14 +182,13 @@ void readNumber(const char readLine[MAX_LENGTH], double numArray[2], int& index)
 		if (isdigit(readLine[k]) || (readLine[k] == '.')){
 			digits += readLine[k];
 			if (!(isdigit(readLine[k + 1]) || (readLine[k + 1] == '.'))){
-				std::cout << digits << endl;
 				answer = atof(digits.c_str());
 				numArray[j++] = answer;
 				digits = "";
 			}
 		}//end if
 	}//end for
-}//end readNumber Function
+}//end stringToDouble Function
 
 //-------------------------------------------------------------------------------------------------
 //arithmetic:    This function will perform the basic arithmetic operations on the two values sent
@@ -198,10 +203,9 @@ void readNumber(const char readLine[MAX_LENGTH], double numArray[2], int& index)
 //-------------------------------------------------------------------------------------------------
 void arithmetic(const char readLine[MAX_LENGTH], char operation, int& index) {
 	double numArray[2];		//array that will hold the two numerical values still in the cstring
-	readNumber(readLine, numArray, index);
+	stringToDouble(readLine, numArray, index);
 	double numberOne = numArray[0];	//take the first number out of the first index
 	double numberTwo = numArray[1]; //take the second number out of the second index
-	std::cout << numArray[0] << " " << numArray[1] << endl;
 	double answer;					//holds the solution to the operation
 	switch (operation) {			//switch to figure out the operation that will be used
 	case '+':						//case '+'
@@ -218,11 +222,14 @@ void arithmetic(const char readLine[MAX_LENGTH], char operation, int& index) {
 		std::cout << "* " << numberOne << " " << numberTwo;
 		break;
 	case '/':						//case '/'
-		if (numberOne > numberTwo)  //check to make sure the universe didnt implode
+		if (numberTwo != 0){ //check to make sure the universe didnt implode
 			answer = numberOne / numberTwo;
-		else
-			answer = 0;				//just saved the universe
-		std::cout << "/ " << numberOne << " " << numberTwo;
+			std::cout << "/ " << numberOne << " " << numberTwo;
+		}//end if
+		else{
+			answer = 12358132134;				//just saved the universe
+			std::cout << "Can not divide by zero." << endl;
+		}//end else
 		break;
 	case '%':						//case '%'
 		answer = static_cast<int>(numberOne) % static_cast<int>(numberTwo);
@@ -236,14 +243,15 @@ void arithmetic(const char readLine[MAX_LENGTH], char operation, int& index) {
 		answer = 0;
 		break;
 	}//end switch
-	std::cout << " " << answer << endl;
+	if (answer != 12358132134)		//do not want to print 0.00 when divide by 0
+		std::cout << "\t" << answer << endl;
 }//end arthmetic Function
 
 //-------------------------------------------------------------------------------------------------
 //trigFunction:  This function will view the char holding the value that stands for the operation
 //				 needed to be performed. Using a switch statement, the function will match this
 //				 char with 'S', 'C', and 'T' and after finding the matching char, that trig
-//				 function will be selected. The function will then call readNumber to determine
+//				 function will be selected. The function will then call stringToDouble to determine
 //				 the degree value that is within the cstring array. After recieving the value,
 //				 double is then converted from degree to radians using the following formula:
 //										PI(number)/180.
@@ -256,29 +264,29 @@ void arithmetic(const char readLine[MAX_LENGTH], char operation, int& index) {
 //				 for the calling function.
 //-------------------------------------------------------------------------------------------------
 void trigFunction(const char readLine[MAX_LENGTH], char operation, int& index) {
-	double numArray[1];						//array to hold the converted double
-	readNumber(readLine, numArray, index);  //find the number still in the cstring
-	double number = numArray[0];			//retrieve that double
-	number = (PI * number) / 180;			//convert from degrees to radians
-	double answer;							//holds the solution to the trig operation
+	double numArray[1];						    //array to hold the converted double
+	stringToDouble(readLine, numArray, index);  //find the number still in the cstring
+	double number = numArray[0];			    //retrieve that double
+	double radian = (number * PI / 180);		//convert from degrees to radians
+	double answer;								//holds the solution to the trig operation
 	switch (operation) {
-	case 'S':								//case Sine
-		answer = sin(number);
-		std::cout << "S" << number;
+	case 'S':									//Sine
+		answer = sin(radian);
+		std::cout << "S " << number;
 		break;
-	case 'C':								//case Cosine
-		answer = cos(number);
-		std::cout << "C" << number;
+	case 'C':									//Cosine
+		answer = cos(radian);
+		std::cout << "C " << number;
 		break;
-	case 'T':								//case Tangent
-		answer = tan(number);
-		std::cout << "T" << number;
+	case 'T':									//Tangent
+		answer = tan(radian);
+		std::cout << "T " << number;
 		break;
 	default:
 		answer = 0;
 		break;
 	}//end switch
-	std::cout << " " << answer << endl;
+	std::cout << "\t" << answer << endl;
 }//end trigFunction Function
 
 //-------------------------------------------------------------------------------------------------
@@ -297,11 +305,16 @@ void modeToPrint(const char readLine[MAX_LENGTH], char next) {
 	switch (next) {
 	case 'e':
 	case 'E':
+		std::cout.unsetf(ios::fixed);
 		std::cout << "E" << std::scientific << endl;
 		break;
 	case 'f':
 	case 'F':
 	default:
-		std::cout << "F" << std::fixed << endl;
+		std::cout.unsetf(ios::scientific);
+		std::fixed;
+		std::cout.setf(ios::showpoint);
+		std::cout.precision(2);
+		std::cout << "F" << endl;
 	}//end switch
 }//end modeToPrint function
