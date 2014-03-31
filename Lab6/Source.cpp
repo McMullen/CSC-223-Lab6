@@ -11,6 +11,7 @@
 //			   The program does all of this by saving each line of the input file in a cstring
 //			   array. All output for this program will be displayed on the terminal.
 //-------------------------------------------------------------------------------------------------
+#define _USE_MATH_DEFINES
 #include <fstream>
 #include <iostream>
 #include <cctype>
@@ -20,7 +21,7 @@
 #include <string>
 using namespace std;
 
-static const double PI = 3.14159;		//constant to represent our approx. value for PI
+static const double PI = M_PI;		//constant to represent our approx. value for PI
 static const int MAX_LENGTH = 30;		//the length of the cstring array
 
 //-------------------------------------------------------------------------------------------------
@@ -86,18 +87,25 @@ void trigFunction(const char readLine[MAX_LENGTH], char operation, int& index);
 //				 will be displayed in scientific notation. If a 'f' or 'F' is found, decimals will
 //				 be displayed with a fixed number of digits.
 //
-//Precondition:  The function requires a cstring and the char read from the first index of the 
-//				 cstring.
+//Precondition:  The function requires the char read from the first index of the 
+//				 cstring. If ch isn't 'e' 'E' 'f' or 'F' the method will default
+//				 to fixed point notation.
+//
 //Postcondition: The function will not return anything. It will however, change the way all other
 //				 functions will print double variables.
 //-------------------------------------------------------------------------------------------------
-void modeToPrint(const char readLine[MAX_LENGTH], char next);
+void modeToPrint(char ch);
 
 //-------------------------------------------------------------------------------------------------
-//cleanToNext:
+//cleanToNext:	the function returns  the index of the next operand or operation
+//				the function cleans all the white spaces, and returns the index where the 
+//				next operand or operator starts 
 //
+//Precondition: Index must be within the bounds of str[].
+//Postcondition:Changes the index value to the index of the next non-whitespace character.
+//				If there is no non-whitespace character left returns -1.
 //-------------------------------------------------------------------------------------------------
-void cleanToNext(const char readLine[MAX_LENGTH], char currentLine[MAX_LENGTH]);
+void cleanToNext(const char str[], int& index);
 
 //-------------------------------------------------------------------------------------------------
 //main:			 The main function will drive the program and make all of the necessary function
@@ -111,8 +119,8 @@ void cleanToNext(const char readLine[MAX_LENGTH], char currentLine[MAX_LENGTH]);
 
 int main(){
 	char readLine[MAX_LENGTH];//cstring array to hold, line by line, the contents of the txt file
-
-	ifstream input;
+	ifstream input;			  //ifstream to read in input
+	
 	input.open("PFN.txt");
 	if (input.fail())		  //check to see if the input file is there, if it isnt then
 		exit(1);			  //close this program instantly
@@ -138,29 +146,25 @@ int main(){
 //Postcondition: This program will not return anything.
 //-------------------------------------------------------------------------------------------------
 void readOperation(const char readLine[MAX_LENGTH], ifstream& input){
-	int doContinue = 0;
-	int index = 0;
+	int index = 0;  //the current index in readLine
+	cleanToNext(readLine, index);
 	char next = readLine[index];
 
-	while (doContinue != 1){
-		if (isalpha(next)){			               //if char of alpha type (some type of letter)
-			if (next == 'S' || next == 'T' || next == 'C'){		//for trig types
-				trigFunction(readLine, next, index);
-				doContinue = 1;
-			}
-			else{
-				modeToPrint(readLine, next);	  //all remaining alpha types
-				doContinue = 1;
-			}
+	if (isalpha(next)){			               //if char of alpha type (some type of letter)
+		if (next == 'S' || next == 'T' || next == 'C'){		//for trig types
+			trigFunction(readLine, next, index);
 		}
-		else if (isprint(next) || (next == '•')){ //if char of print type (punctuation)
-			arithmetic(readLine, next, index);
-			doContinue = 1;
+		else{
+			modeToPrint(next);	  //all remaining alpha types
 		}
-		index++;
-		next = readLine[index];
 	}
+	else if (isprint(next) || (next == 'Â•')){ //if char of print type (punctuation)
+		arithmetic(readLine, next, index);
+	}
+	index++;
+	next = readLine[index];
 }
+
 
 //-------------------------------------------------------------------------------------------------
 //stringToDouble:This function will find all of the numbers remaining in the cstring array, store
@@ -175,8 +179,8 @@ void readOperation(const char readLine[MAX_LENGTH], ifstream& input){
 //-------------------------------------------------------------------------------------------------
 void stringToDouble(const char readLine[MAX_LENGTH], double numArray[2], int& index){
 	double answer = 0;		//stores the solution of the cast that will be stored in the new array
-	int j = 0, i = 0;
-	string digits = "";
+	int j = 0;				//the index of numArray[] to store the next double value to
+	string digits = "";     //the string values of the double as its built
 
 	for (unsigned int k = 0; (j != 2) && (k < (strlen(readLine) - 1)); k++){
 		if (isdigit(readLine[k]) || (readLine[k] == '.')){
@@ -216,7 +220,7 @@ void arithmetic(const char readLine[MAX_LENGTH], char operation, int& index) {
 		answer = numberOne - numberTwo;
 		std::cout << "- " << numberOne << " " << numberTwo;
 		break;
-	case '•':						
+	case 'Â•':
 	case '*':						//case '*'
 		answer = numberOne * numberTwo;
 		std::cout << "* " << numberOne << " " << numberTwo;
@@ -296,20 +300,22 @@ void trigFunction(const char readLine[MAX_LENGTH], char operation, int& index) {
 //				 will be displayed in scientific notation. If a 'f' or 'F' is found, decimals will
 //				 be displayed with a fixed number of digits.
 //
-//Precondition:  The function requires a cstring and the char read from the first index of the 
-//				 cstring.
+//Precondition:  The function requires the char read from the first index of the 
+//				 cstring. If ch isn't 'e' 'E' 'f' or 'F' the method will default
+//				 to fixed point notation.
+//
 //Postcondition: The function will not return anything. It will however, change the way all other
 //				 functions will print double variables.
 //-------------------------------------------------------------------------------------------------
-void modeToPrint(const char readLine[MAX_LENGTH], char next) {
-	switch (next) {
+void modeToPrint(char ch) {
+	switch (ch) {
 	case 'e':
-	case 'E':
+	case 'E':	//Change the print mode to scientific notation
 		std::cout.unsetf(ios::fixed);
 		std::cout << "E" << std::scientific << endl;
 		break;
 	case 'f':
-	case 'F':
+	case 'F':	//Change the print mode to fixed point notation
 	default:
 		std::cout.unsetf(ios::scientific);
 		std::fixed;
@@ -318,3 +324,18 @@ void modeToPrint(const char readLine[MAX_LENGTH], char next) {
 		std::cout << "F" << endl;
 	}//end switch
 }//end modeToPrint function
+
+
+//-------------------------------------------------------------------------------------------------
+//cleanToNext:	the function returns  the index of the next operand or operation
+//				the function cleans all the white spaces, and returns the index where the 
+//				next operand or operator starts 
+//
+//Precondition: Index must be within the bounds of str[]. str[] must contain a non-whitespace
+//				char or the method will create an array out of bounds error.
+//
+//Postcondition:Changes the index value to the index of the next non-whitespace character.
+//-------------------------------------------------------------------------------------------------
+void cleanToNext(const char str[], int& index){
+	while (isspace(str[index])){ index++; }
+}
